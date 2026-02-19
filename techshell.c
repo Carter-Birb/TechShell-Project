@@ -92,21 +92,81 @@ void executeCommand(ShellCommand cmd) {
     if (cmd.command == NULL)
         return;
 
-    /* Built-in: exit */
+    /* exit */
     if (strcmp(cmd.command, "exit") == 0) {
         exit(0);
     }
 
-    /* Built-in: cd */
+    /* cd */
     if (strcmp(cmd.command, "cd") == 0) {
-        if (cmd.args[1] == NULL) {
-            fprintf(stderr, "cd: missing argument\n");
-        } else {
+
+        // cd with no args -> home directory
+        if (cmd.args[1] == NULL || cmd.args[1][0] == '\0') {
+            char *home = getenv("HOME");
+            if (home == NULL) {
+                fprintf(stderr, "cd: HOME environment variable not set\n");
+            } else {
+                if (chdir(home) != 0)
+                    perror("cd");
+            }
+        }
+        else {
             if (chdir(cmd.args[1]) != 0)
                 perror("cd");
         }
         return;
     }
+
+    /* touch */
+    if (strcmp(cmd.command, "touch") == 0) {
+
+        if (cmd.args[1] == NULL) {
+            fprintf(stderr, "touch: missing filename\n");
+            return;
+        }
+
+        int fd = open(cmd.args[1],
+                      O_WRONLY | O_CREAT,
+                      0644);
+
+        if (fd < 0)
+            perror("touch");
+        else
+            close(fd);
+
+        return;
+    }
+
+    /* mkdir */
+    if (strcmp(cmd.command, "mkdir") == 0) {
+
+        if (cmd.args[1] == NULL) {
+            fprintf(stderr, "mkdir: missing directory name\n");
+            return;
+        }
+
+        if (mkdir(cmd.args[1], 0755) != 0)
+            perror("mkdir");
+
+        return;
+    }
+
+    /* rmdir */
+    if (strcmp(cmd.command, "rmdir") == 0) {
+
+        if (cmd.args[1] == NULL) {
+            fprintf(stderr, "rmdir: missing directory name\n");
+            return;
+        }
+
+        if (rmdir(cmd.args[1]) != 0)
+            perror("rmdir");
+
+        return;
+    }
+
+
+    /* OTHERWISE: external command */
 
     pid_t pid = fork();
 
@@ -116,9 +176,8 @@ void executeCommand(ShellCommand cmd) {
     }
 
     if (pid == 0) {
-        // CHILD PROCESS
 
-        /* Input redirection */
+        // Input redirection
         if (cmd.inputFile != NULL) {
             int fd = open(cmd.inputFile, O_RDONLY);
             if (fd < 0) {
@@ -129,7 +188,7 @@ void executeCommand(ShellCommand cmd) {
             close(fd);
         }
 
-        /* Output redirection */
+        // Output redirection
         if (cmd.outputFile != NULL) {
             int fd = open(cmd.outputFile,
                           O_WRONLY | O_CREAT | O_TRUNC,
@@ -143,13 +202,10 @@ void executeCommand(ShellCommand cmd) {
         }
 
         execvp(cmd.command, cmd.args);
-
-        // If execvp returns, there was an error
         perror("execvp");
         exit(errno);
     }
     else {
-        // PARENT PROCESS
         wait(NULL);
     }
 }

@@ -23,13 +23,16 @@ TechShell is a simplified Unix-like command line interpreter written in C. The p
 
 ## Implemented Features
 
-
+- `touch` — Creates empty files
+- `mkdir` — Creates directories  
+- `rmdir` — Removes directories
+- `cd` (alone) - returns to home directory
 
 ### Built-in Commands
 
 | Command | Description |
 |---------|-------------|
-| `cd` | Changes the current directory. With no argument, moves to the root directory. |
+| `cd` | Changes the current directory. |
 | `touch <filename>` | Creates an empty file if it does not exist. |
 | `mkdir <dirname>` | Creates a new directory. |
 | `rmdir <dirname>` | Removes an empty directory. |
